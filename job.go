@@ -42,6 +42,7 @@ type internalJob struct {
 	// event listeners
 	afterJobRuns          func(jobID uuid.UUID, jobName string)
 	beforeJobRuns         func(jobID uuid.UUID, jobName string)
+	beforeJobRunsWithError func(jobID uuid.UUID, jobName string) error
 	afterJobRunsWithError func(jobID uuid.UUID, jobName string, err error)
 	afterJobRunsWithPanic func(jobID uuid.UUID, jobName string, recoverData any)
 	afterLockError        func(jobID uuid.UUID, jobName string, err error)
@@ -720,6 +721,18 @@ func BeforeJobRuns(eventListenerFunc func(jobID uuid.UUID, jobName string)) Even
 			return ErrEventListenerFuncNil
 		}
 		j.beforeJobRuns = eventListenerFunc
+		return nil
+	}
+}
+
+// BeforeJobRunsError is used to listen for when a job is about to run and
+// then run the provided function and returns an error if any.
+func BeforeJobRunsError(eventListenerFunc func(jobID uuid.UUID, jobName string) error ) EventListener {
+	return func(j *internalJob) error {
+		if eventListenerFunc == nil {
+			return ErrEventListenerFuncNil
+		}
+		j.beforeJobRunsWithError = eventListenerFunc
 		return nil
 	}
 }
